@@ -1,34 +1,31 @@
 package main
 
-import "edcgo/edjournal"
 import (
 	. "github.com/lxn/walk/declarative"
 	"github.com/lxn/walk"
+	"time"
+	"fmt"
 )
 
 type EdcgoMainWindow struct {
 	*walk.MainWindow
-	journalPathLabel *walk.Label
+	flightLogPathLabel *walk.Label
+	eventLabel         *walk.Label
+	flightLog *FlightLog
 }
 
-func (mw *EdcgoMainWindow) init() {
-	journalPath, _ := edjournal.GetDefaultJournalPath()
-	mw.journalPathLabel = new(walk.Label)
-	mw.journalPathLabel.SetText(journalPath)
-}
+func (mw *EdcgoMainWindow) init() *MainWindow {
+	flightLogPath := getDefaultFlightLogPath()
+	mw.flightLogPathLabel = new(walk.Label)
+	mw.flightLogPathLabel.SetText(flightLogPath)
+	mw.eventLabel = new(walk.Label)
+	mw.eventLabel.SetText("None")
+	mw.flightLog = new(FlightLog)
+	mw.flightLog.path = flightLogPath
+	mw.flightLog.updateLatestFile()
 
-func loop() {
-}
-
-func main() {
-
-	mainWindow := new(EdcgoMainWindow);
-	mainWindow.init()
-
-	go loop()
-
-	mw := MainWindow{
-		AssignTo: &mainWindow.MainWindow,
+	return &MainWindow{
+		AssignTo: &mw.MainWindow,
 		Title: "Elite: Dangerous  Companion",
 		//MinSize: Size{100, 400},
 		Layout: VBox{},
@@ -37,29 +34,20 @@ func main() {
 				Layout: HBox{},
 				Children: []Widget{
 					Label{
-						Text:               "Journal path:",
+						Text:               "Flight log path:",
 					},
 					Label{
-						AssignTo: &mainWindow.journalPathLabel,
-						Text: mainWindow.journalPathLabel.Text(),
+						AssignTo: &mw.flightLogPathLabel,
+						Text:     flightLogPath,
 					},
-					PushButton{
-						Text: "change",
-						OnClicked: func(){
-							dlg := new(walk.FileDialog)
-
-							dlg.Title = "Select Elite: Dangerous journal log forlder"
-							dlg.InitialDirPath = mainWindow.journalPathLabel.Text()
-
-							if ok, err := dlg.ShowBrowseFolder(mainWindow); err != nil {
-								return
-							} else if !ok {
-								return
-							}
-
-							mainWindow.journalPathLabel.SetText(dlg.FilePath)
-						},
-					},
+					HSpacer{},
+				},
+			},
+			Composite{
+				Layout:HBox{},
+				Children: []Widget{
+					Label{Text:"Event:"},
+					Label{AssignTo:&mw.eventLabel, Text:"None"},
 					HSpacer{},
 				},
 			},
@@ -70,7 +58,32 @@ func main() {
 			},
 		},
 	}
+}
 
-	mw.Run()
+func (mw *EdcgoMainWindow) getJournalPath() string {
+	return mw.flightLogPathLabel.Text()
+}
 
+func (mw *EdcgoMainWindow) setEvent(event string) {
+	mw.eventLabel.SetText(event)
+}
+
+func loop(fl *FlightLog) {
+	for true {
+		//if fl.isUpdated() {
+		//	flight_log_file := fl.getLatestLog()
+		//	fl.parseLogFile(flight_log_file)
+		//}
+		time.Sleep(time.Second)
+	}
+}
+
+func main() {
+	//main_window := new(EdcgoMainWindow)
+	//mw := main_window.init()
+	//go loop(main_window.flightLog)
+	//mw.Run()
+	fl := new(FlightLog)
+	fl.path = getDefaultFlightLogPath()
+	fmt.Println(fl.updateLatestFile())
 }
